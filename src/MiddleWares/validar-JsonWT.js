@@ -7,8 +7,8 @@ const validarJWT = (req, res = response, next) => {
 
     if (!JWtoken) {
         return res.status(401).json({
-            ok: false,
-            msg: "Error en el JsonWebToken"
+            status: false,
+            message: "Error en el JsonWebToken"
         })
     }
 
@@ -23,8 +23,8 @@ const validarJWT = (req, res = response, next) => {
         
     } catch (error) {
         return res.status(401).json({
-            ok: false,
-            msg: "Token no valido"
+            status: false,
+            message: "Token no valido"
         })
     }
 
