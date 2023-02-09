@@ -7,24 +7,24 @@ require('dotenv').config()
 
 const app = express()
 
-//Database
+// Iniciar la Base de Datos.
 dbConection()
 
-//Directorio publico
+// Directorio publico
 app.use(express.static('src/public'))
 
-//ModdleWares
+// ModdleWares
 app.use(morgan('dev'))
-//Cors
+// Cors
 app.use(cors())
-//lectura y parseo del body.
+// lectura de jsons del body.
 app.use(express.json({limit: '50mb'}))
 
-//EndPionts
+// EndPionts
 app.use('/gymkhana/auth', require('./src/routes/auth.routes'))
 app.use('/gymkhana/crud', require('./src/routes/trabajos.routes'))
 
-//CallBack para enviar un mensaje cuando inicie el servidor
+// CallBack para enviar un mensaje cuando inicie el servidor.
 app.listen(process.env.PORT, () => {
     console.log(colors.rainbow(`Servidor Corriendo En El Puerto: ${process.env.PORT}`))
 })

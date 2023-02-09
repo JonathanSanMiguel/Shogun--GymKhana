@@ -1,44 +1,45 @@
-//Sirve para igualar el res a response y permita el intellisense
+// Sirve para igualar el res a response y permita el intellisense
 const { response, json } = require('express')
 const Usuario = require('../Models/Usuario')
 const bcrypt = require('bcryptjs')
 const { generarJWT } = require('../helpers/jsonWebToken')
 
-//CallBack para Crear un nuevo usuario.
-const createUser = async(req, res = response) => {
-    //Parametros para el SignIn.
-    const { nombre, apellido, email, password } = req.body
 
+// Funcion para Crear un nuevo usuario.
+const createUser = async(req, res = response) => {
     try {
-        //Verificacion de email.
+        // Parametros para el SignIn que estan en el request.body.
+        const { nombre, apellido, email, password } = req.body
+
+        // Verificacion de email.
         let usuario = await Usuario.findOne({email})
 
-        //Si el email existe, termina el proceso. 
-        if (usuario) {
+        // Si el email existe, termina el proceso. 
+        if (usuario){
             return res.status(400).json({
-                ok: false,
-                msg: "Email ya registrado"
+                status: false,
+                message: "Email ya Registrado"
             })
         }
 
-        //Creacion del usuario con el modelo
-        //Nueva instancia del usuario.
+        // Creacion del usuario con el modelo
+        // Nueva instancia del usuario.
         const dbUser = new Usuario(req.body)
 
-        //Hash al password.
+        // Hash al password.
         const salt = bcrypt.genSaltSync(15)
         dbUser.password = bcrypt.hashSync(password, salt)
 
-        //Generar el JsonWebToken.
+        // Generar el JsonWebToken.
         const JWtoken = await generarJWT(dbUser.id, dbUser.email, dbUser.nombre, dbUser.apellido)
 
-        //Crear usuario en la Batabase.
+        // Crear usuario en la Batabase.
         await dbUser.save()
         
-        //res successful.
+        // res successful.
         return res.status(201).json({
-            ok: true,
-            msg: "Registro Exitoso",
+            status: true,
+            message: "Registro Exitoso",
             uid: dbUser.id,
             email: dbUser.email,
             nombre: dbUser.nombre,
@@ -46,85 +47,95 @@ const createUser = async(req, res = response) => {
             JWtoken
         })
 
-      //res en caso de error
+        // En caso de error, res json con el error.
     } catch (error) {
         return res.status(500).json({
-            ok: false,
-            msg: "Something was Wrong..."
+            status: false,
+            message: error.message
         })//return
     }//catch
 }//createUser
 
 
-//CallBack para iniciar sesion.
+// Funcion para iniciar sesion.
 const LogIn = async(req, res = response) => {
-    
-    const { email, password } = req.body
-
     try {
+        // Parametros para el LogIn que estan en el request.body.
+        const { email, password } = req.body
+
+        // Busca en la BD si el email existe.
        const dbUser = await Usuario.findOne({email})
 
-       //Validar si los datos son validos
+       // Valida si el correo es valido.
        if(!dbUser){
         return res.status(400).json({
-            ok: "false",
-            msg: "Correo no valido"
+            status: false,
+            message: "Correo no Valido"
         })
        }
 
-       //Confirmar si el password hace match
+       // Confirmar si el password hace match.
        const validPassword = bcrypt.compareSync(password, dbUser.password)
        if (!validPassword) {
             return res.status(400).json({
-                ok: "false",
-                msg: "Password no valida"
+                status: false,
+                message: "Contraseña no Valida"
             })
        }
 
-       //Generar el JsonWebToken
+       // Generar el JsonWebToken.
        const JWtoken = await generarJWT(dbUser.id, dbUser.email, dbUser.nombre, dbUser.apellido)
 
-       //res del servicio
+       // res successful
        return res.json({
-            ok: "true",
-            msg: "Login Success",
+            status: true,
+            message: "Logueado Con Exito",
             uid: dbUser.id,
             email: dbUser.email,
             nombre: dbUser.nombre,
             apellido: dbUser.apellido,
             JWtoken
        })
-
+       
+        // En caso de error, res json con el error.
     } catch (error) {
         return res.status(500).json({
-            ok: "false",
-            msg: "Something wrong Goes..."
-        })
-    }
+            status: false,
+            message: error.message
+        })//return
+    }//catch
 }//login
 
 
-//CallBack para validar el JsonToken.
+// Funcion para validar el JsonToken.
 const renewToken = async(req, res = response) => {
+    try {
+        const { uid, email, nombre, apellido } = req
 
-    const { uid, email, nombre, apellido } = req
+        // Generar el JsonWebToken
+        const JWtoken = await generarJWT(uid, email, nombre, apellido)
+    
+        // res successful
+        return res.status(200).json({
+            status: true,
+            message: "JsonWebToken Renovado",
+            uid,
+            email,
+            nombre,
+            apellido,
+            JWtoken
+        })
 
-    //Generar el JsonWebToken
-    const JWtoken = await generarJWT(uid, email, nombre, apellido)
-
-    return res.json({
-        ok: "true",
-        msg: "renewed",
-        uid,
-        email,
-        nombre,
-        apellido,
-        JWtoken
-    })//return
+        // En caso de error, res json con el error.
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: error.message
+        })//return
+    }//catch
 }//renewToken
 
 
-//Exportar los CallBacks.
 module.exports = {
     createUser,
     LogIn,

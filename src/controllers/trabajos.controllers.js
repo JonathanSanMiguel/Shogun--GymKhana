@@ -2,44 +2,56 @@ const Trabajo = require('../Models/Trabajo')
 const { UploadImage, DeleteImage }  = require('../cloudinary')
 const fs = require('fs-extra')
 
-// Funcion GET
+
+// Funcion para obtener todos los registros.
 const ObtenerTrabajos = async(req, res) => {
     try {
+        // Consulta y guarda todos los registros en un arreglo.
         const trabajos = await Trabajo.find()
+
+        // res del arreglo con los registros.
         res.status(200).json(trabajos)
-    } catch (error) {
+
+        // En caso de error, res json con el error.
+    } catch (error){
         res.status(500).json({
             status: false,
             message: error.message
-        })
-    }
-}
+        })//res
+    }//catch
+}//obtenerTrabajos
 
-//Funcion GET ONE
+
+// Funcion para obtener un solo registro.
 const ObtenerUnTrabajo = async(req, res) => {
     try {
+        // Crea un objeto con los datos de la peticion.
+        const trabajo = await Trabajo.findById(req.params.id)
 
-        const producto = await Product.findById(req.params.id)
-
-        if(!producto) {
+        // Valida si encontro un registro.
+        if(!trabajo) {
             return res.status(404).json( {
-                message: 'El producto no existe'
+                status: false,
+                message: 'El Registro no Existe'
             })
         } else {
             res.status(200).send({
                 status: true,
-                producto
+                trabajo
             })
         }
-    } catch (error) {
+
+        // En caso de error, res json con el error
+    } catch (error){
         res.status(500).json({
             status: false,
             message: error.message
-        })
-    }
-}
+        })//res
+    }//catch
+}//ObtenerUnTrabajo
 
-//Funcion POST
+
+// Funcion para crear un nuevo registro.
 const CrearTrabajo = async(req, res) => {
     try {
         // Desestructuracion de los parametros del req.body.
@@ -48,7 +60,7 @@ const CrearTrabajo = async(req, res) => {
         // Creacion de una instancia del modelo con los parametros.
         const trabajo = new Trabajo({ nombre, descripcion, folio, fecha })
 
-        // SI la peticion tiene una imagen la cargara.
+        // Carga la imagen que esta en el request.files.
         if(req.files?.image) {
             const result = await UploadImage(req.files.image.tempFilePath)
             trabajo.image = {
@@ -58,6 +70,7 @@ const CrearTrabajo = async(req, res) => {
             await fs.unlink(req.files.image.tempFilePath)
         }
 
+        // Carga la factura en PDF que esta en el request.files.
         if(req.files?.factura) {
             const result = await UploadImage(req.files.factura.tempFilePath)
             trabajo.factura = {
@@ -67,49 +80,54 @@ const CrearTrabajo = async(req, res) => {
             await fs.unlink(req.files.factura.tempFilePath)
         }
 
-        // Guarda el registro en la DB.
+        // Guarda el objeto del registro en la DB.
         await trabajo.save()
 
-        // Respuesta en json
+        // res successful
         res.status(200).json({
             status: true,
             message: 'Registro creado Satisfactoriamente',
             trabajo
         })
-    } catch (error) {
-        // En caso de error, res json con el error
+
+        // En caso de error, res json con el error.
+    } catch (error){
         res.status(500).json({
             status: false,
             message: error.message
-        })
-    }
-}
+        })//res
+    }//catch
+}//crearTrabajo
 
-//Funcion UPDATE
+
+//Funcion para actualizar un registro.
 const ActualizarTrabajo = async(req, res) => {
     try {
+        // Busca en la BD el registro a actualizar.
+        const registroAnterior = await Trabajo.findById(req.params.id)
 
-        const productoAnterior = await Product.findById(req.params.id)
-
-        if(!productoAnterior) {
+        // Con el resultado de la busqueda anterior, borra las imagenes en cloudinary.
+        if(!registroAnterior) {
+            // Si el registro no existe, termina el proceso. 
             return res.status(404).json({
-                message: 'El producto no existe'
+                status: false,
+                message: 'El Registro no Existe'
             })
         } else {
-            await DeleteImage(productoAnterior.image.public_id)
-            await DeleteImage(productoAnterior.factura.public_id)
+            await DeleteImage(registroAnterior.image.public_id)
+            await DeleteImage(registroAnterior.factura.public_id)
         }
 
         // Desestructuracion de los parametros del req.body.
         const { nombre, descripcion, fecha  } = req.body
 
         // Creacion de una instancia del modelo con los parametros.
-        const producto = new Product({ nombre, descripcion, fecha })
+        const trabajo = new Trabajo({ nombre, descripcion, fecha })
 
         // Carga la imagen del form.
         if(req.files?.image) {
             const result = await UploadImage(req.files.image.tempFilePath)
-            producto.image = {
+            trabajo.image = {
                 public_id: result.public_id,
                 secure_url: result.secure_url
             }
@@ -119,65 +137,72 @@ const ActualizarTrabajo = async(req, res) => {
         // Carga la factura en PDF del form.
         if(req.files?.factura) {
             const result = await UploadImage(req.files.factura.tempFilePath)
-            producto.factura = {
+            trabajo.factura = {
                 public_id: result.public_id,
                 secure_url: result.secure_url
             }
             await fs.unlink(req.files.factura.tempFilePath)
         }
 
-        //console.log(producto)
-        await Product.findByIdAndUpdate(req.params.id, {
-            nombre: producto.nombre,
-            descripcion: producto.descripcion,
-            producto: producto.fecha,
+        // Actualiza el registro mandandole un objeto con los datos.
+        await Trabajo.findByIdAndUpdate(req.params.id, {
+            nombre: trabajo.nombre,
+            descripcion: trabajo.descripcion,
+            fecha: trabajo.fecha,
             image: {
-                public_id: producto.image.public_id,
-                secure_url: producto.image.secure_url
+                public_id: trabajo.image.public_id,
+                secure_url: trabajo.image.secure_url
             },
             factura: {
-                public_id: producto.factura.public_id,
-                secure_url: producto.factura.secure_url
+                public_id: trabajo.factura.public_id,
+                secure_url: trabajo.factura.secure_url
             }
         })
 
+        // res successful.
         res.status(200).json({
             status: true,
-            message: 'Registro actualizado Satisfactoriamente'
+            message: 'Registro Actualizado Satisfactoriamente'
         })
-    } catch (error) {
+
+        // En caso de error, res json con el error.
+    } catch (error){
         res.status(500).json({
             status: false,
             message: error.message
-        })
-    }
-}
+        })//res
+    }//catch
+}//ActualizarTrabajo
 
-//Funcion DELETE
+
+//Funcion para borrar un registro.
 const BorrarTrabajo = async(req, res) => {
     try {
-        // Busca el registro por Id y lo elimina
-        const producto = await Product.findByIdAndDelete(req.params.id)
+        // Busca el registro por Id y lo elimina.
+        const trabajo = await Trabajo.findByIdAndDelete(req.params.id)
 
-        if(!producto) {
+        if(!trabajo) {
             return res.status(404).json({
-                message: 'El producto no existe'
+                message: 'El Registro no Existe'
             })
         } else {
-            await DeleteImage(producto.image.public_id)
-            await DeleteImage(producto.factura.public_id)
+            await DeleteImage(trabajo.image.public_id)
+            await DeleteImage(trabajo.factura.public_id)
             res.status(200).send({
                 status: true,
                 message: 'Registro eliminado Satisfactoriamente'
             })
         }
-    } catch (error) {
+
+        // En caso de error, res json con el error.
+    } catch (error){
         res.status(500).json({
             status: false,
             message: error.message
-        })
-    }
-}
+        })//res
+    }//catch
+}//BorrarTrabajo
+
 
 module.exports = {
     ObtenerTrabajos,

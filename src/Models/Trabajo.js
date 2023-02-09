@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 
+// Esquema de la collecion para los resgistros
 const TrabajoSchema = mongoose.Schema({
     image:{
         public_id: String,
