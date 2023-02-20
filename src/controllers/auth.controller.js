@@ -37,7 +37,7 @@ const createUser = async(req, res = response) => {
         await dbUser.save()
         
         // res successful.
-        return res.status(201).json({
+        return res.status(200).json({
             status: true,
             message: "Registro Exitoso",
             uid: dbUser.id,
@@ -79,7 +79,7 @@ const LogIn = async(req, res = response) => {
        if (!validPassword) {
             return res.status(400).json({
                 status: false,
-                message: "Contraseña no Valida"
+                message: "La Contraseña es Incorrecta"
             })
        }
 
@@ -87,7 +87,7 @@ const LogIn = async(req, res = response) => {
        const JWtoken = await generarJWT(dbUser.id, dbUser.email, dbUser.nombre, dbUser.apellido)
 
        // res successful
-       return res.json({
+       return res.status(200).json({
             status: true,
             message: "Logueado Con Exito",
             uid: dbUser.id,
