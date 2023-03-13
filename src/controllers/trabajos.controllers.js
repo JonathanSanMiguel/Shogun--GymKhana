@@ -1,16 +1,27 @@
 const Trabajo = require('../Models/Trabajo')
-const { UploadImage, DeleteImage }  = require('../cloudinary')
+const { UploadImage, DeleteImage } = require('../cloudinary')
 const fs = require('fs-extra')
 
 
 // Funcion para obtener todos los registros.
 const ObtenerTrabajos = async(req, res) => {
     try {
-        // Consulta y guarda todos los registros en un arreglo.
-        const trabajos = await Trabajo.find()
+        let trabajos
+
+        if (req.query.userId === "640f71072acb9b915d4d69a6") {
+            // Consulta y guarda todos los registros en un arreglo.
+            trabajos = await Trabajo.find()
+        } else {
+            const userID = req.query.userId
+
+            // Consulta y guarda todos los registros en un arreglo.
+            trabajos = await Trabajo.find({ usuarioId: userID })
+        }
 
         // res del arreglo con los registros.
-        res.status(200).json(trabajos)
+        res.status(200).json(
+            trabajos
+        )
 
         // En caso de error, res json con el error.
     } catch (error){
@@ -55,10 +66,10 @@ const ObtenerUnTrabajo = async(req, res) => {
 const CrearTrabajo = async(req, res) => {
     try {
         // Desestructuracion de los parametros del req.body.
-        const { nombre, descripcion, folio, fecha  } = req.body
+        const { usuarioNombre, usuarioId, nombre, descripcion, folio, fecha  } = req.body
 
         // Creacion de una instancia del modelo con los parametros.
-        const trabajo = new Trabajo({ nombre, descripcion, folio, fecha })
+        const trabajo = new Trabajo({ usuarioNombre, usuarioId, nombre, descripcion, folio, fecha })
 
         // Carga la imagen que esta en el request.files.
         if(req.files?.image) {
@@ -138,7 +149,7 @@ const ActualizarTrabajo = async(req, res) => {
                 console.log('se borro la factura');
             }
         }
-        
+
         // Desestructuracion de los parametros del req.body.
         const { nombre, descripcion, fecha } = req.body
 
@@ -183,9 +194,7 @@ const ActualizarTrabajo = async(req, res) => {
             }
         }
 
-
         console.log(trabajo)
-
 
         // Actualiza el registro mandandole un objeto con los datos.
         await Trabajo.findByIdAndUpdate(req.params.id, {

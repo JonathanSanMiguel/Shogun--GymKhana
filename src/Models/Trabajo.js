@@ -2,6 +2,12 @@ const mongoose = require('mongoose')
 
 // Esquema de la collecion para los resgistros
 const TrabajoSchema = mongoose.Schema({
+    usuarioNombre:{
+        type: String
+    },
+    usuarioId:{
+        type: String
+    },
     image:{
         public_id: String,
         secure_url: String
@@ -9,8 +15,7 @@ const TrabajoSchema = mongoose.Schema({
     nombre: {
         type: String,
         require: true,
-        trim: true,
-        unique: true
+        trim: true
     },
     descripcion: {
         type: String,
@@ -18,7 +23,8 @@ const TrabajoSchema = mongoose.Schema({
     },
     folio: {
         type: Number,
-        trim: true
+        trim: true,
+        unique: true
     },
     fecha: {
         type: Date
