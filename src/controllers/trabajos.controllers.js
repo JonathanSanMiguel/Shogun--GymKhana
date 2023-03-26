@@ -37,7 +37,7 @@ const ObtenerTrabajos = async(req, res) => {
 const ObtenerUnTrabajo = async(req, res) => {
     try {
         // Crea un objeto con los datos de la peticion.
-        const trabajo = await Trabajo.findById(req.params.id)
+        const trabajo = await Trabajo.findOne({ folio: req.params.id})
 
         // Valida si encontro un registro.
         if(!trabajo) {
@@ -46,10 +46,10 @@ const ObtenerUnTrabajo = async(req, res) => {
                 message: 'El Registro no Existe'
             })
         } else {
-            res.status(200).send({
-                status: true,
+            res.status(200).send(
+                //status: true,
                 trabajo
-            })
+            )
         }
 
         // En caso de error, res json con el error
